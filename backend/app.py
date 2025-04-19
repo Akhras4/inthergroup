@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 import os
 import json
@@ -8,9 +9,11 @@ from datetime import datetime
 from typing import List, Dict
 
 app = Flask(__name__, static_folder='../frontend/build')
+CORS(app)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['COMPONENT_DB'] = 'component_db.json'
 app.config['ALLOWED_EXTENSIONS'] = {'dxf'}
+app.config['COMPONENT_DB'] = os.path.join(os.path.dirname(__file__), 'component_db.json')
 
 # Ensure upload directory exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -211,7 +214,9 @@ def upload_file():
     
     return jsonify({"error": "Invalid file type"}), 400
 
-@app.route('/api/component_db', methods=['GET'])
+
+
+@app.route('/component_db', methods=['GET'])
 def get_component_db():
     """Return the component database"""
     try:
