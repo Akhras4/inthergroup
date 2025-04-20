@@ -52,29 +52,32 @@ export default function Lookuplist() {
             <div key={key} className="component-card">
               <h3>{key}</h3>
               <div className="component-details">
-                <p><strong>Type:</strong> {component.Component}</p>
-                <p><strong>Subtype:</strong> {component.Subtype}</p>
-                <p><strong>IO Device:</strong> {component.IO_Type}</p>
-                
+                <div className='first-st'>
+                <div className='type'><p><strong>Type:</strong>  {component.Component}</p></div>
+                <div className='Subtype'><p><strong>Subtype:</strong> {component.Subtype}</p></div>
+                <div className='IO-device'><p><strong>IO Device:</strong> {component.IO_Type}</p></div>
+                </div>
+                <div className="mid-st">
                 <div className="io-section">
                   <h4>Inputs</h4>
-                  <ul>
+                  <div>
                     {component.Inputs.map((input, i) => (
-                      <li key={i}>{input}</li>
+                      <p key={i}>{input}</p>
                     ))}
-                  </ul>
+                  </div>
                 </div>
 
                 {component.Outputs && component.Outputs.length > 0 && (
                   <div className="io-section">
                     <h4>Outputs</h4>
-                    <ul>
+                    <div>
                       {component.Outputs.map((output, i) => (
-                        <li key={i}>{output}</li>
+                        <p key={i}>{output}</p>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
+                </div>
 
                 <div className="cable-info">
                   <p><strong>Input Cable:</strong> {component.Input_Cable || 'N/A'}</p>
