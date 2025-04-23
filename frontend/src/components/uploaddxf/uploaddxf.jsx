@@ -316,31 +316,7 @@ export default function UploadDxf({ onUploadSuccess }) {
       {error && <div className="error-message">{error}</div>}
 
       {renderResults()}
-      {/* {results && (
-      <div className="data-structure-help">
-        <h4>Data Structure Help</h4>
-        <p>Your backend should return data in this format:</p>
-        <div className="debug-info">
-          {JSON.stringify({
-            "Total IO List": [
-              {
-                "Position": "01.00000",
-                "Component": "Example Component",
-                "Inputs": "Input1, Input2",
-                // ... other expected fields
-              }
-            ],
-            "IO Configuration": [
-              // ... IO config items
-            ]
-          }, null, 2)}
-        </div>
-        <p>Current data structure received:</p>
-        <div className="debug-info">
-          {JSON.stringify(results, null, 2)}
-        </div>
-      </div>
-    )} */}
+     
   </div>
     
   );

@@ -60,6 +60,7 @@ def natural_sort_key(s: Dict) -> List:
 
 def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
     """Parse DXF file and return structured data, with detailed component logging"""
+    ALLOWED_LAYERS = {'0_SA-Comp_Profinet', '0_SA-Comp_Safety'}
     try:
         doc = ezdxf.readfile(dxf_path)
         msp = doc.modelspace()
@@ -82,12 +83,15 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
         total_entities = 0
         matched_components = 0
 
+
         for entity in msp:
             if entity.dxftype() != 'INSERT':
                 continue
 
             total_entities += 1
             layer = entity.dxf.layer
+            if layer =="0_SA-Comp_ICE":
+                continue
             block = entity.dxf.name
             has_attribs = hasattr(entity, 'attribs')  # Fix for attribute check
 
@@ -232,6 +236,8 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
             "timestamp": datetime.now().isoformat(),
             "source_file": os.path.basename(dxf_path)
         }
+
+
 
 results_store = {}  # Temporary storage for results
 
