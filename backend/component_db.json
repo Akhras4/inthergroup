@@ -428,7 +428,7 @@
       "Input_Type": 1,
       "Output_Type": 0
     },
-    "IN_ICE": {
+    "IN": {
       "Component": "Sensors ICE",
       "Subtype": "IN sensor ICE",
       "IO_Type": 1,
@@ -439,7 +439,7 @@
       "Input_Type": 1,
       "Output_Type": 0
     },
-    "END_ICE": {
+    "END": {
       "Component": "Sensors ICE",
       "Subtype": "END sensor ICE",
       "IO_Type": 1,
