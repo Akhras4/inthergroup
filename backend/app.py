@@ -59,8 +59,17 @@ def natural_sort_key(s: Dict) -> List:
             for text in re.split('([0-9]+)', s["Position"])]
 
 def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
-    """Parse DXF file and return structured data, with detailed component logging"""
-    ALLOWED_LAYERS = {'0_SA-Comp_Profinet', '0_SA-Comp_Safety'}
+    """Parse DXF file and return structured data with detailed component logging"""
+    ALLOWED_LAYERS = {
+        '0_SA-Comp_Profinet', 
+        '0_SA-Comp_Safety',
+        '0_SA-Comp_Inther',
+        '0_SA-Comp_400V'
+    }
+    EXCLUDED_LAYERS = {
+        '0_SA-Comp_ICE',  # Explicitly exclude ICE layer
+    }
+    
     try:
         doc = ezdxf.readfile(dxf_path)
         msp = doc.modelspace()
@@ -83,17 +92,19 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
         total_entities = 0
         matched_components = 0
 
-
         for entity in msp:
             if entity.dxftype() != 'INSERT':
                 continue
 
             total_entities += 1
             layer = entity.dxf.layer
-            if layer =="0_SA-Comp_ICE":
+            if layer in EXCLUDED_LAYERS:
                 continue
+            if layer not in ALLOWED_LAYERS:
+                continue
+
             block = entity.dxf.name
-            has_attribs = hasattr(entity, 'attribs')  # Fix for attribute check
+            has_attribs = hasattr(entity, 'attribs')
 
             # Default values for logging
             log_text = '-'
@@ -112,9 +123,11 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
 
                         log_text = text if len(text) <= 20 else text[:17] + "..."
 
-                        # Check for component match
+                        # Enhanced component matching
                         prefix = None
-                        text_clean = text.replace('=', '').replace('+', '')  # Clean special chars
+                        text_clean = text.replace('=', '').replace('+', '').strip()
+                        
+                        # Check all possible matching patterns
                         for p in component_db:
                             # Case 1: Standard prefix match
                             if text.startswith(p):
@@ -122,6 +135,14 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                                 break
                             # Case 2: Siemens-style code match
                             elif text.startswith('=Z') and p in text_clean:
+                                prefix = p
+                                break
+                            # Case 3: Exact match for special components
+                            elif text_clean == p:
+                                prefix = p
+                                break
+                            # Case 4: Match after underscore (for components like END_ICE)
+                            elif '_' in text_clean and text_clean.split('_')[0] == p:
                                 prefix = p
                                 break
 
@@ -140,7 +161,8 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                                         position=position.split('.')[1] if '.' in position else position,
                                         num=text.split('_')[1] if '_' in text else '1'
                                     ))
-                                except:
+                                except Exception as e:
+                                    print(f"Error formatting input pattern '{pattern}': {str(e)}")
                                     inputs.append(f"Error: {pattern}")
 
                             for pattern in info.get("Outputs", []):
@@ -149,7 +171,8 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                                         position=position.split('.')[1] if '.' in position else position,
                                         num=text.split('_')[1] if '_' in text else '1'
                                     ))
-                                except:
+                                except Exception as e:
+                                    print(f"Error formatting output pattern '{pattern}': {str(e)}")
                                     outputs.append(f"Error: {pattern}")
 
                             # Update logging variables
@@ -180,9 +203,12 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                             # Add to IO Configuration
                             for i in range(max(len(inputs), len(outputs))):
                                 port = i % 8
+                                device_prefix = 'fio' if info['Subtype'] == 'fio' else 'io'
+                                device_name = f"{device_prefix}{position.replace('.', '')}"
+                                
                                 if i < len(inputs):
                                     result["IO Configuration"].append({
-                                        "IO device": f"{'fio' if info['Subtype'] == 'fio' else 'io'}{position.replace('.', '')}",
+                                        "IO device": device_name,
                                         "Splitter used?": "No",
                                         "Pin number": "Pin 2",
                                         "Port number": port,
@@ -195,7 +221,7 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                                 
                                 if i < len(outputs):
                                     result["IO Configuration"].append({
-                                        "IO device": f"{'fio' if info['Subtype'] == 'fio' else 'io'}{position.replace('.', '')}",
+                                        "IO device": device_name,
                                         "Splitter used?": "No",
                                         "Pin number": "Pin 4",
                                         "Port number": None,
