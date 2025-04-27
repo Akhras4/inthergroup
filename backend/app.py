@@ -66,6 +66,7 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
         '0_SA-Comp_Inther',
         '0_SA-Comp_400V'
     }
+    
     EXCLUDED_LAYERS = {
         '0_SA-Comp_ICE',  # Explicitly exclude ICE layer
     }
@@ -76,7 +77,6 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
 
         result = {
             "Total IO List": [],
-            "IO Configuration": [],
             "timestamp": datetime.now().isoformat(),
             "source_file": os.path.basename(dxf_path)
         }
@@ -88,7 +88,6 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
         print("-" * 120)
 
         sequence = 1
-        i_onr, q_onr = 300, 318
         total_entities = 0
         matched_components = 0
 
@@ -98,8 +97,6 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
 
             total_entities += 1
             layer = entity.dxf.layer
-            if layer in EXCLUDED_LAYERS:
-                continue
             if layer not in ALLOWED_LAYERS:
                 continue
 
@@ -199,45 +196,6 @@ def parse_dxf_to_json(dxf_path: str, component_db: Dict) -> Dict:
                             }
                             io_device = {k: v for k, v in io_device.items() if v is not None}
                             result["Total IO List"].append(io_device)
-
-                            # Add to IO Configuration
-                            for i in range(max(len(inputs), len(outputs))):
-                                port = i % 8
-                                device_prefix = 'fio' if info['Subtype'] == 'fio' else 'io'
-                                device_name = f"{device_prefix}{position.replace('.', '')}"
-                                
-                                if i < len(inputs):
-                                    result["IO Configuration"].append({
-                                        "IO device": device_name,
-                                        "Splitter used?": "No",
-                                        "Pin number": "Pin 2",
-                                        "Port number": port,
-                                        "I/O name": inputs[i],
-                                        "I/O": "I",
-                                        "I/O Number": f"I{i_onr}.{port}",
-                                        "Cable type": info.get("Input_Cable", ""),
-                                        "CABLE LENGTH": ""
-                                    })
-                                
-                                if i < len(outputs):
-                                    result["IO Configuration"].append({
-                                        "IO device": device_name,
-                                        "Splitter used?": "No",
-                                        "Pin number": "Pin 4",
-                                        "Port number": None,
-                                        "I/O name": outputs[i],
-                                        "I/O": "Q",
-                                        "I/O Number": f"Q{q_onr}.{port}",
-                                        "Cable type": info.get("Output_Cable", ""),
-                                        "CABLE LENGTH": ""
-                                    })
-
-                                if port == 7:
-                                    i_onr += 1
-                                    q_onr += 1
-
-                            sequence += 1
-
                     except Exception as e:
                         print(f"Error processing attribute in {block}: {str(e)}")
                         continue
